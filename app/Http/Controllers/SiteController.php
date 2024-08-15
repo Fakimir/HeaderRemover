@@ -24,6 +24,6 @@ class SiteController extends Controller
 
         $pageText = $crawler->filter('body')->text();
 
-        return Service::serve($crawler);
+        return Service::serve($crawler, $url);
     }
 }

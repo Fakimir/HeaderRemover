@@ -49,11 +49,20 @@ class CssParser
         return $rules;
     }
 
-    public static function getCssUrls(Crawler $crawler): array
+    public static function getCssUrls(Crawler $crawler, string $url): array
     {
         $cssUrls = [];
-        $crawler->filter('link[rel="preload"][as="style"], link[rel="stylesheet"][href*=".css"]')->each(function (Crawler $cssLink) use (&$cssUrls) {
-            $cssUrls[] = $cssLink->attr('href'); 
+        $crawler->filter('link[rel="preload"][as="style"], link[rel="stylesheet"][href*=".css"]')->each(function (Crawler $cssLink) use (&$cssUrls, $url) {
+            $href = $cssLink->attr('href');
+
+            $urlWithoutTrailingSlash = rtrim($url, '/');
+            $hrefWithoutLeadingSlash = ltrim($href, '/');
+    
+            if (!str_contains($href, "http")) {
+                $cssUrls[] = $urlWithoutTrailingSlash . '/' . $hrefWithoutLeadingSlash; 
+            } else {
+                $cssUrls[] = $href; 
+            }
         });
         return $cssUrls;
     }
@@ -62,7 +71,7 @@ class CssParser
     {
         $ch = curl_init($cssUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $cssContent = curl_exec($ch);
+        $cssContent = curl_exec($ch);//полная ссылка + host
         curl_close($ch);
 
         return $cssContent ?: null;

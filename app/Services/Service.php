@@ -8,20 +8,21 @@ use App\Services\CssParser;
 
 class Service
 {
-    public static function serve(Crawler $crawler, int $limit = null): string
+    /*
+        url param required to fetch css styles due to href type be like /dir/dir/file.css
+    */
+    public static function serve(Crawler $crawler, string $url, int $limit = null): string
     {
         $dom = new DOMDocument();
         @$dom->loadHTML($crawler->html(), LIBXML_NOBLANKS | LIBXML_NOERROR | LIBXML_NOWARNING);
 
         $xpath = new DOMXPath($dom);
 
-        // стиль
         self::deleteNodeByStyle($xpath, 'display: none');
         self::deleteNodeByStyle($xpath, 'visibility: hidden');
         self::deleteNodeByStyle($xpath, 'opacity: 0');
         self::deleteNodeByStyle($xpath, 'font-size: 0'); 
 
-        // атрибуты
         self::deleteNodesByAttribute($xpath, 'role', 'banner');
         self::deleteNodesByAttribute($xpath, 'role', 'navigation');
         self::deleteNodesByAttribute($xpath, 'role', 'tablist');
@@ -35,12 +36,10 @@ class Service
         self::deleteNodesByAttribute($xpath, 'class', 'nav');
         self::deleteNodesByAttribute($xpath, 'class', 'scroll');
 
-        //тэги
         self::deleteNodesByTagName($xpath, 'nav');
         self::deleteNodesByTagName($xpath, 'header');
 
-        //css файлы
-        $cssUrls = CssParser::getCssUrls($crawler);
+        $cssUrls = CssParser::getCssUrls($crawler, $url);
         self::deleteNodesByCssFiles($cssUrls, $xpath);
 
         $cleanedText = self::cleanText($dom->textContent);

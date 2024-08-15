@@ -4,6 +4,7 @@ namespace App\Services;
 use Symfony\Component\DomCrawler\Crawler;
 use DOMDocument;
 use DOMXPath;
+use App\Services\CssParser;
 
 class Service
 {
@@ -38,6 +39,10 @@ class Service
         self::deleteNodesByTagName($xpath, 'nav');
         self::deleteNodesByTagName($xpath, 'header');
 
+        //css файлы
+        $cssUrls = CssParser::getCssUrls($crawler);
+        self::deleteNodesByCssFiles($cssUrls, $xpath);
+
         $cleanedText = self::cleanText($dom->textContent);
 
         if ($limit) {
@@ -49,7 +54,7 @@ class Service
 
     private static function deleteNodeByStyle(DOMXPath $xpath, string $style): void
     {
-        $selector = "//*[contains(@style, '$style')]"; 
+        $selector = "//*[contains(@style, '$style')]";
         self::deleteNode($selector, $xpath);
     }
 
@@ -76,6 +81,23 @@ class Service
         $nodesToRemove = $xpath->query($selector);
         foreach ($nodesToRemove as $node) {
             $node->parentNode->removeChild($node);
+        }
+    }
+
+    public static function deleteNodesByCssFiles(array $cssUrls, DOMXPath $xpath): void
+    {
+        foreach ($cssUrls as $cssUrl) {
+            $cssContent = CssParser::fetchCssFile($cssUrl);
+            if ($cssContent) {
+                $cssRules = CssParser::parseCss($cssContent);
+
+                foreach ($cssRules as $rule) {
+                    $selector = CssParser::createXpathSelectorByStyle($rule, ['display: none', 'visibility: hidden', 'opacity: 0', 'font-size: 0']); 
+                    if (!empty($selector)) {
+                        self::deleteNode($selector, $xpath);
+                    }
+                }
+            }
         }
     }
 

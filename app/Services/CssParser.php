@@ -5,48 +5,36 @@ use Symfony\Component\DomCrawler\Crawler;
 
 class CssParser
 {
-    public static function createXpathSelectorByStyle(array $rule, array $styles): string
+    public static function getHiddenElements(string $cssContent): array
     {
-        foreach ($styles as $style) {
-            if (strpos($rule['style'], $style) !== false) {
-                $selector = $rule['selector'];
-                $selector = preg_replace('/\./', '*', $selector); 
-                return "//*[contains(@style, '$style')]"; 
+        $hiddenElements = [];
+
+        $lines = explode("}", $cssContent);
+        foreach ($lines as $line) {
+            $line = explode("{", $line);
+            if (count($line) == 2 && strpos($line[1], "display:none") !== false) {
+                array_push($hiddenElements, $line[0]);
             }
         }
-        return '';
+
+        return $hiddenElements;
     }
 
-    public static function parseCss(string $cssContent): array
+    public static function convertSelectorToXPath(string $selector): string
     {
-        $rules = [];
-        $lines = explode("n", $cssContent);
-        $currentRule = null;
+        $xpath = $selector;
     
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line) || strpos($line, '{') !== false) {
-                if ($currentRule) {
-                    $rules[] = $currentRule;
-                    $currentRule = null;
-                }
-                continue;
-            }
+        $xpath = str_replace('.', '[@class="', $xpath);
+        $xpath = str_replace('#', '[@id="', $xpath);
+        $xpath = preg_replace('/([^\[]+)@class="([^"]+)"/', '$1" or contains(@class, "$2")', $xpath);
+        $xpath = str_replace(']', '"]', $xpath);
     
-            if ($currentRule) {
-                $currentRule['style'] .= ' ' . $line;
-            } else {
-                $parts = explode(' {', $line);
-                if (count($parts) === 2) {
-                    $currentRule = [
-                        'selector' => trim($parts[0]),
-                        'style' => trim($parts[1], ' }'),
-                    ];
-                }
-            }
-        }
+        $xpath = str_replace('[', '[@', $xpath);
+        $xpath = preg_replace('/(\w+)=("|\')([^"\']*)("|\')/', '="$3"', $xpath);
     
-        return $rules;
+        $xpath = preg_replace('/:(after|before)/', '', $xpath);
+    
+        return "//$xpath";
     }
 
     public static function getCssUrls(Crawler $crawler, string $url): array

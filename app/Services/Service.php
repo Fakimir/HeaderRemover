@@ -88,10 +88,9 @@ class Service
         foreach ($cssUrls as $cssUrl) {
             $cssContent = CssParser::fetchCssFile($cssUrl);
             if ($cssContent) {
-                $cssRules = CssParser::parseCss($cssContent);
-
-                foreach ($cssRules as $rule) {
-                    $selector = CssParser::createXpathSelectorByStyle($rule, ['display: none', 'visibility: hidden', 'opacity: 0', 'font-size: 0']); 
+                $hiddenElements = CssParser::getHiddenElements($cssContent);
+                foreach ($hiddenElements as $el) {
+                    $selector = CssParser::convertSelectorToXPath($el);
                     if (!empty($selector)) {
                         self::deleteNode($selector, $xpath);
                     }

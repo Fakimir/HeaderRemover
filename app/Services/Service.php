@@ -90,13 +90,20 @@ class Service
             if ($cssContent) {
                 $hiddenElements = CssParser::getHiddenElements($cssContent);
                 foreach ($hiddenElements as $el) {
-                    $selector = CssParser::convertSelectorToXPath($el);
-                    if (!empty($selector)) {
+                    var_dump($el);//--------------=
+                    $selector = CssParser::cssToXPath($el);
+                    if (!empty($selector) && !(self::hasPseudoElements($selector))) {
+                        var_dump($selector);//---------------=
                         self::deleteNode($selector, $xpath);
                     }
                 }
             }
         }
+    }
+
+    private static function hasPseudoElements(string $cssSelector): bool
+    {
+        return preg_match('/:after|:before|:first-child|:last-child|:nth-child\(.*?\)|:nth-of-type\(.*?\)/', $cssSelector) === 1;
     }
 
     private static function cleanText(string $text): string //пока что нет решения

@@ -20,23 +20,30 @@ class CssParser
         return $hiddenElements;
     }
 
-    public static function convertSelectorToXPath(string $selector): string
+    public static function cssToXPath(string $cssSelector): string
     {
-        $xpath = $selector;
-    
-        $xpath = str_replace('.', '[@class="', $xpath);
-        $xpath = str_replace('#', '[@id="', $xpath);
-        $xpath = preg_replace('/([^\[]+)@class="([^"]+)"/', '$1" or contains(@class, "$2")', $xpath);
-        $xpath = str_replace(']', '"]', $xpath);
-    
-        $xpath = str_replace('[', '[@', $xpath);
-        $xpath = preg_replace('/(\w+)=("|\')([^"\']*)("|\')/', '="$3"', $xpath);
-    
-        $xpath = preg_replace('/:(after|before)/', '', $xpath);
-    
-        return "//$xpath";
+        $selectors = preg_split('/\s*(,|\s+)\s*/', trim($cssSelector));
+        $xpathSelectors = [];
+
+        foreach ($selectors as $selector) {
+            $xpath = self::convertSelectorToXPath($selector);
+            $xpathSelectors[] = $xpath;
+        }
+
+        return implode('|', $xpathSelectors);
     }
 
+    public static function convertSelectorToXPath(string $selector): string
+    {
+
+        $selector = preg_replace('/\.(\w[\w\-]*)/', '[@class="$1"]', $selector);
+        
+        $selector = preg_replace('/\#(\w[\w\-]*)/', '[@id="$1"]', $selector);
+
+        $selector = preg_replace('/\s+/', '/', $selector);
+
+        return '//' . trim($selector);
+    }
     public static function getCssUrls(Crawler $crawler, string $url): array
     {
         $cssUrls = [];

@@ -20,30 +20,6 @@ class CssParser
         return $hiddenElements;
     }
 
-    public static function cssToXPath(string $cssSelector): string
-    {
-        $selectors = preg_split('/\s*(,|\s+)\s*/', trim($cssSelector));
-        $xpathSelectors = [];
-
-        foreach ($selectors as $selector) {
-            $xpath = self::convertSelectorToXPath($selector);
-            $xpathSelectors[] = $xpath;
-        }
-
-        return implode('|', $xpathSelectors);
-    }
-
-    public static function convertSelectorToXPath(string $selector): string
-    {
-
-        $selector = preg_replace('/\.(\w[\w\-]*)/', '[@class="$1"]', $selector);
-        
-        $selector = preg_replace('/\#(\w[\w\-]*)/', '[@id="$1"]', $selector);
-
-        $selector = preg_replace('/\s+/', '/', $selector);
-
-        return '//' . trim($selector);
-    }
     public static function getCssUrls(Crawler $crawler, string $url): array
     {
         $cssUrls = [];

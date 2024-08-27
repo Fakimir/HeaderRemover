@@ -5,6 +5,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use DOMDocument;
 use DOMXPath;
 use App\Services\CssParser;
+use App\Services\XPathConverter;
 
 class Service
 {
@@ -91,7 +92,7 @@ class Service
                 $hiddenElements = CssParser::getHiddenElements($cssContent);
                 foreach ($hiddenElements as $el) {
                     var_dump($el);//--------------=
-                    $selector = CssParser::cssToXPath($el);
+                    $selector = XPathConverter::cssToXPath($el);
                     if (!empty($selector) && !(self::hasPseudoElements($selector))) {
                         var_dump($selector);//---------------=
                         self::deleteNode($selector, $xpath);
